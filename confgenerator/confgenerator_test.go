@@ -28,7 +28,6 @@ import (
 const (
 	validTestdataDir       = "testdata/valid"
 	invalidTestdataDir     = "testdata/invalid"
-	defaultGoldenPath      = "default_config"
 	defaultLogsDir         = "/var/log/google-cloud-ops-agent/subagents"
 	defaultStateDir        = "/var/lib/google-cloud-ops-agent/fluent-bit"
 	windowsDefaultLogsDir  = "C:\\ProgramData\\Google\\Cloud Operations\\Ops Agent\\log"
@@ -128,12 +127,12 @@ func TestGenerateConfsWithValidInput(t *testing.T) {
 
 func expectedConfig(testName string, validFilePathFormat string, t *testing.T) string {
 	goldenPath := fmt.Sprintf(validFilePathFormat, platform, testName)
-	defaultPath := fmt.Sprintf(validFilePathFormat, platform, defaultGoldenPath)
 	rawExpectedConfig, err := ioutil.ReadFile(goldenPath)
 	if err != nil {
-		t.Logf("test %q: Golden conf not detected at %s. Using the default at %s instead.", testName, goldenPath, defaultPath)
-		if rawExpectedConfig, err = ioutil.ReadFile(defaultPath); err != nil {
-			t.Fatalf("test %q: error reading the default golden conf from %s : %s", testName, defaultPath, err)
+		if *updateGolden {
+			return ""
+		} else {
+			t.Fatalf("test %q: error reading the golden conf from %s : %s", testName, goldenPath, err)
 		}
 	}
 	return string(rawExpectedConfig)

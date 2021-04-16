@@ -26,14 +26,13 @@ import (
 )
 
 const (
-	validTestdataDir         = "testdata/valid"
-	invalidTestdataDir       = "testdata/invalid"
-	defaultGoldenPath        = "default_config"
-	defaultWindowsGoldenPath = "windows_default_config"
-	defaultLogsDir           = "/var/log/google-cloud-ops-agent/subagents"
-	defaultStateDir          = "/var/lib/google-cloud-ops-agent/fluent-bit"
-	windowsDefaultLogsDir    = "C:\\ProgramData\\Google\\Cloud Operations\\Ops Agent\\log"
-	windowsDefaultStateDir   = "C:\\ProgramData\\Google\\Cloud Operations\\Ops Agent\\run"
+	validTestdataDir       = "testdata/valid"
+	invalidTestdataDir     = "testdata/invalid"
+	defaultGoldenPath      = "default_config"
+	defaultLogsDir         = "/var/log/google-cloud-ops-agent/subagents"
+	defaultStateDir        = "/var/lib/google-cloud-ops-agent/fluent-bit"
+	windowsDefaultLogsDir  = "C:\\ProgramData\\Google\\Cloud Operations\\Ops Agent\\log"
+	windowsDefaultStateDir = "C:\\ProgramData\\Google\\Cloud Operations\\Ops Agent\\run"
 )
 
 var (
@@ -48,21 +47,22 @@ var (
 	goldenOtelPath     = validTestdataDir + "/%s/%s/golden_otel.conf"
 )
 
-var isWindows bool
+var platform string
 
 func init() {
 	hostInfo, _ := host.Info()
 	if hostInfo.OS == "windows" {
-		isWindows = true
+		platform = "windows"
+	} else {
+		platform = "linux"
 	}
 }
 
 func TestGenerateConfsWithValidInput(t *testing.T) {
-	dirPath := validTestdataDir + "/linux"
+	dirPath := validTestdataDir + "/" + platform
 	logsDir := defaultLogsDir
 	stateDir := defaultStateDir
-	if isWindows {
-		dirPath = validTestdataDir + "/windows"
+	if platform == "windows" {
 		logsDir = windowsDefaultLogsDir
 		stateDir = windowsDefaultStateDir
 	}
@@ -105,7 +105,7 @@ func TestGenerateConfsWithValidInput(t *testing.T) {
 			updateOrCompareGolden(t, testName, expectedMainConfig, mainConf, goldenMainPath)
 			updateOrCompareGolden(t, testName, expectedParserConfig, parserConf, goldenParserPath)
 
-			if isWindows {
+			if platform == "windows" {
 				expectedOtelConfig := expectedConfig(testName, goldenOtelPath, t)
 				otelConf, err := uc.GenerateOtelConfig()
 				if err != nil {
@@ -127,14 +127,8 @@ func TestGenerateConfsWithValidInput(t *testing.T) {
 }
 
 func expectedConfig(testName string, validFilePathFormat string, t *testing.T) string {
-	goldenPath := fmt.Sprintf(validFilePathFormat, "linux", testName)
-	var defaultPath string
-	if isWindows {
-		defaultPath = fmt.Sprintf(validFilePathFormat, "windows", defaultWindowsGoldenPath)
-		goldenPath = fmt.Sprintf(validFilePathFormat, "windows", testName)
-	} else {
-		defaultPath = fmt.Sprintf(validFilePathFormat, "linux", defaultGoldenPath)
-	}
+	goldenPath := fmt.Sprintf(validFilePathFormat, platform, testName)
+	defaultPath := fmt.Sprintf(validFilePathFormat, platform, defaultGoldenPath)
 	rawExpectedConfig, err := ioutil.ReadFile(goldenPath)
 	if err != nil {
 		t.Logf("test %q: Golden conf not detected at %s. Using the default at %s instead.", testName, goldenPath, defaultPath)
@@ -152,10 +146,7 @@ func updateOrCompareGolden(t *testing.T, testName string, expected string, actua
 	if diff := cmp.Diff(actual, expected); diff != "" {
 		if *updateGolden {
 			// Update the expected to match the actual.
-			goldenPath := fmt.Sprintf(path, "linux", testName)
-			if isWindows {
-				goldenPath = fmt.Sprintf(path, "windows", testName)
-			}
+			goldenPath := fmt.Sprintf(path, platform, testName)
 			t.Logf("Detected -update_golden flag. Rewriting the %q golden file to apply the following diff\n%s.", goldenPath, diff)
 			if err := ioutil.WriteFile(goldenPath, []byte(actual), 0644); err != nil {
 				t.Fatalf("error updating golden file at %q : %s", goldenPath, err)
@@ -167,10 +158,7 @@ func updateOrCompareGolden(t *testing.T, testName string, expected string, actua
 }
 
 func TestGenerateConfigsWithInvalidInput(t *testing.T) {
-	filePath := invalidTestdataDir + "/linux"
-	if isWindows {
-		filePath = invalidTestdataDir + "/windows"
-	}
+	filePath := invalidTestdataDir + "/" + platform
 	files, err := ioutil.ReadDir(filePath)
 	if err != nil {
 		t.Fatal(err)

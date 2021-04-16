@@ -186,11 +186,14 @@ func generateConfigs(uc UnifiedConfig, defaultLogsDir string, defaultStateDir st
 	if _, _, err := uc.GenerateFluentBitConfigs(defaultLogsDir, defaultStateDir); err != nil {
 		return err
 	}
-	if _, err := uc.GenerateOtelConfig(); err != nil {
-		return err
-	}
-	if _, err := uc.GenerateCollectdConfig(defaultLogsDir); err != nil {
-		return err
+	if platform == "windows" {
+		if _, err := uc.GenerateOtelConfig(); err != nil {
+			return err
+		}
+	} else {
+		if _, err := uc.GenerateCollectdConfig(defaultLogsDir); err != nil {
+			return err
+		}
 	}
 	return nil
 }

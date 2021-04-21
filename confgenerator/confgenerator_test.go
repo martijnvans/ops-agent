@@ -44,6 +44,7 @@ var (
 	goldenParserPath   = validTestdataDir + "/%s/%s/golden_fluent_bit_parser.conf"
 	goldenCollectdPath = validTestdataDir + "/%s/%s/golden_collectd.conf"
 	goldenOtelPath     = validTestdataDir + "/%s/%s/golden_otel.conf"
+	goldenErrorPath    = invalidTestdataDir + "/%s/%s/golden_error"
 )
 
 var platform string
@@ -139,6 +140,18 @@ func expectedConfig(testName string, validFilePathFormat string, t *testing.T) s
 	return string(rawExpectedConfig)
 }
 
+func expectedError(testName string, filePath string, t *testing.T) string {
+	rawExpectedConfig, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		if *updateGolden {
+			return ""
+		} else {
+			t.Fatalf("test %q: error reading the expected error file from %s : %s", testName, filePath, err)
+		}
+	}
+	return string(rawExpectedConfig)
+}
+
 func updateOrCompareGolden(t *testing.T, testName string, expected string, actual string, path string) {
 	t.Helper()
 	expected = strings.ReplaceAll(expected, "\r\n", "\n")
@@ -158,21 +171,22 @@ func updateOrCompareGolden(t *testing.T, testName string, expected string, actua
 }
 
 func TestGenerateConfigsWithInvalidInput(t *testing.T) {
-	filePath := invalidTestdataDir + "/" + platform
-	files, err := ioutil.ReadDir(filePath)
+	dirPath := invalidTestdataDir + "/" + platform
+	dirs, err := ioutil.ReadDir(dirPath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, f := range files {
-		testName := f.Name()
+	for _, d := range dirs {
+		testName := d.Name()
 		t.Run(testName, func(t *testing.T) {
-			unifiedConfigFilePath := fmt.Sprintf(filePath+"/%s", testName)
+			unifiedConfigFilePath := fmt.Sprintf(dirPath+"/%s/input.yaml", testName)
+			expectedErrorFilePath := fmt.Sprintf(dirPath+"/%s/golden_error", testName)
 			data, err := ioutil.ReadFile(unifiedConfigFilePath)
-			if err != nil {
-				t.Fatalf("ReadFile(%q) got %v", unifiedConfigFilePath, err)
-			}
+			expectedError := strings.TrimSuffix(expectedError(testName, expectedErrorFilePath, t), "\n")
 			uc, err := ParseUnifiedConfig(data)
 			if err != nil {
+				updateOrCompareGolden(t, testName, expectedError, err.Error(), goldenErrorPath)
+				// t.Errorf("test %q: generateConfigs failed with unexpected error.\nwant error\n  %s\ngot error:\n  %s\ninput yaml file:\n%s", testName, expected, err, data)
 				// Unparsable config is a success for this test
 				return
 			}

@@ -17,7 +17,6 @@ package confgenerator
 
 import (
 	"fmt"
-	"path/filepath"
 	"sort"
 	"strings"
 
@@ -200,13 +199,13 @@ func defaultTails(logsDir string, stateDir string) (tails []*conf.Tail) {
 	tails = []*conf.Tail{}
 	tailFluentbit := conf.Tail{
 		Tag:  "ops-agent-fluent-bit",
-		DB:   filepath.Join(stateDir, "buffers", "ops-agent-fluent-bit"),
-		Path: filepath.Join(logsDir, "logging-module.log"),
+		DB:   fmt.Sprintf("%s\\%s\\%s", stateDir, "buffers", "ops-agent-fluent-bit"),
+		Path: fmt.Sprintf("%s\\%s", logsDir, "logging-module.log"),
 	}
 	tailCollectd := conf.Tail{
 		Tag:  "ops-agent-collectd",
-		DB:   filepath.Join(stateDir, "buffers", "ops-agent-collectd"),
-		Path: filepath.Join(logsDir, "metrics-module.log"),
+		DB:   fmt.Sprintf("%s\\%s\\%s", stateDir, "buffers", "ops-agent-collectd"),
+		Path: fmt.Sprintf("%s\\%s", logsDir, "metrics-module.log"),
 	}
 	tails = append(tails, &tailFluentbit)
 	hostInfo, _ := host.Info()
@@ -502,7 +501,7 @@ func generateFluentBitInputs(fileReceiverFactories map[string]*fileReceiverFacto
 			if f, ok := fileReceiverFactories[rID]; ok {
 				fbTail := conf.Tail{
 					Tag:  fmt.Sprintf("%s.%s", pID, rID),
-					DB:   filepath.Join(stateDir, "buffers", pID+"_"+rID),
+					DB:   fmt.Sprintf("%s\\%s\\%s", stateDir, "buffers", pID+"_"+rID),
 					Path: strings.Join(f.IncludePaths, ","),
 				}
 				if len(f.ExcludePaths) != 0 {
@@ -526,7 +525,7 @@ func generateFluentBitInputs(fileReceiverFactories map[string]*fileReceiverFacto
 					Tag:          fmt.Sprintf("%s.%s", pID, rID),
 					Channels:     strings.Join(f.Channels, ","),
 					Interval_Sec: "1",
-					DB:           filepath.Join(stateDir, "buffers", pID+"_"+rID),
+					DB:           fmt.Sprintf("%s\\%s\\%s", stateDir, "buffers", pID+"_"+rID),
 				}
 				fbWinEventlogs = append(fbWinEventlogs, &fbWinlog)
 				continue

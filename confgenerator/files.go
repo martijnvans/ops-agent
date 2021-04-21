@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 )
 
 func GenerateFiles(input, service, logsDir, stateDir, outDir string) error {
@@ -30,11 +29,11 @@ func (uc *UnifiedConfig) GenerateFiles(service, logsDir, stateDir, outDir string
 		if err := os.MkdirAll(outDir, 0755); err != nil {
 			return fmt.Errorf("can't create output directory %q: %w", outDir, err)
 		}
-		path := filepath.Join(outDir, "fluent_bit_main.conf")
+		path := fmt.Sprintf("%s\\%s", outDir, "fluent_bit_main.conf")
 		if err := ioutil.WriteFile(path, []byte(mainConfig), 0644); err != nil {
 			return fmt.Errorf("can't write %q: %w", path, err)
 		}
-		path = filepath.Join(outDir, "fluent_bit_parser.conf")
+		path = fmt.Sprintf("%s\\%s", outDir, "fluent_bit_parser.conf")
 		if err := ioutil.WriteFile(path, []byte(parserConfig), 0644); err != nil {
 			return fmt.Errorf("can't write %q: %w", path, err)
 		}
@@ -47,7 +46,7 @@ func (uc *UnifiedConfig) GenerateFiles(service, logsDir, stateDir, outDir string
 		if err := os.MkdirAll(outDir, 0755); err != nil {
 			return fmt.Errorf("can't create output directory %q: %w", outDir, err)
 		}
-		path := filepath.Join(outDir, "collectd.conf")
+		path := fmt.Sprintf("%s\\%s", outDir, "collectd.conf")
 		if err := ioutil.WriteFile(path, []byte(collectdConfig), 0644); err != nil {
 			return fmt.Errorf("can't write %q: %w", path, err)
 		}
@@ -60,7 +59,7 @@ func (uc *UnifiedConfig) GenerateFiles(service, logsDir, stateDir, outDir string
 		if err := os.MkdirAll(outDir, 0755); err != nil {
 			return fmt.Errorf("can't create output directory %q: %w", outDir, err)
 		}
-		path := filepath.Join(outDir, "otel.yaml")
+		path := fmt.Sprintf("%s\\%s", outDir, "otel.yaml")
 		if err := ioutil.WriteFile(path, []byte(otelConfig), 0644); err != nil {
 			return fmt.Errorf("can't write %q: %w", path, err)
 		}

@@ -52,6 +52,7 @@ var isWindows bool
 
 func init() {
 	hostInfo, _ := host.Info()
+	isWindows = true
 	if hostInfo.OS == "windows" {
 		isWindows = true
 	}
